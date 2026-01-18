@@ -1,0 +1,9 @@
+blueprint:
+  name: TV Play – Helper + Scene with delay & Disney
+  description: >
+    📺 💡
+    When TV starts playing, helper is triggered with optional delay (on/off),
+    then Scene is triggered with optional delay.
+    Works with Apple TV and Chromecast apps.
+  domain: automation
+  source_url: https://github.com/nero-Ha/Appletv-blueprints/blob/main/blueprints/automation/tv_play_helper_scene.yaml
