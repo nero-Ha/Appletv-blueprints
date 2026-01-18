@@ -1,0 +1,206 @@
+blueprint:
+  name: TV Pause – Helper + Scene with delay &Disney
+  description: >
+    📺 💡
+    When TV is paused, helper is triggered with optional delay (on/off),
+    then Scene is triggered with optional delay.
+    Works with Apple TV and Chromecast apps.
+  domain: automation
+
+  input:
+    tv_media_player:
+      name: TV
+      selector:
+        entity:
+          domain: media_player
+
+    starttime:
+      name: Start time
+      default: "18:00:00"
+      selector:
+        time: {}
+
+    endtime:
+      name: End time
+      default: "06:00:00"
+      selector:
+        time: {}
+
+    scene_target:
+      name: Scene for lights
+      selector:
+        target:
+          entity:
+            domain: scene
+
+    helper_target:
+      name: Helper (movie_mode)
+      selector:
+        entity:
+          domain: input_boolean
+
+    helper_action:
+      name: Helper Action
+      default: "on"
+      selector:
+        select:
+          options:
+            - label: Turn ON
+              value: "on"
+            - label: Turn OFF
+              value: "off"
+
+    helper_delay_value:
+      name: Helper Delay
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 600
+          step: 1
+
+    helper_delay_unit:
+      name: Helper Delay Unit
+      default: "seconds"
+      selector:
+        select:
+          options:
+            - seconds
+            - minutes
+            - hours
+
+    scene_delay_value:
+      name: Scene Delay
+      default: 2
+      selector:
+        number:
+          min: 0
+          max: 600
+          step: 1
+
+    scene_delay_unit:
+      name: Scene Delay Unit
+      default: "seconds"
+      selector:
+        select:
+          options:
+            - seconds
+            - minutes
+            - hours
+
+    apple_tv_apps:
+      name: Apple TV App IDs
+      default: []
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: YouTube
+              value: com.google.ios.youtube
+            - label: Netflix
+              value: com.netflix.Netflix
+            - label: HBO Max
+              value: com.wbd.stream
+            - label: Plex
+              value: com.plexapp.plex
+            - label: Amazon Prime
+              value: com.amazon.aiv.AIVApp
+            - label: Disney+
+              value: com.disney.disneyplus
+          custom_value: true
+
+    chromecast_tv_apps:
+      name: Chromecast Apps
+      default: []
+      selector:
+        select:
+          multiple: true
+          options:
+            - label: YouTube
+              value: YouTube
+            - label: Netflix
+              value: Netflix
+            - label: YouTube TV
+              value: YouTube TV
+            - label: Plex
+              value: Plex
+            - label: Disney+
+              value: Disney+
+          custom_value: true
+
+    block_helper:
+      name: Block Automation Helper
+      description: "If ON, automation will not run"
+      selector:
+        entity:
+          domain: input_boolean
+
+variables:
+  tv_media_player: !input tv_media_player
+  helper_target_var: !input helper_target
+  helper_action_var: !input helper_action
+  helper_delay_value: !input helper_delay_value
+  helper_delay_unit: !input helper_delay_unit
+  scene_delay_value: !input scene_delay_value
+  scene_delay_unit: !input scene_delay_unit
+  apple_tv_apps: !input apple_tv_apps
+  chromecast_tv_apps: !input chromecast_tv_apps
+  block_helper_var: !input block_helper
+
+mode: single
+
+trigger:
+  - platform: state
+    entity_id: !input tv_media_player
+    to: paused
+
+condition:
+  - condition: state
+    entity_id: !input block_helper
+    state: "off"
+
+  - condition: time
+    after: !input starttime
+    before: !input endtime
+
+  - condition: template
+    value_template: >
+      {{ (state_attr(tv_media_player, 'app_id') in apple_tv_apps) or (apple_tv_apps == []) }}
+
+  - condition: template
+    value_template: >
+      {{ (state_attr(tv_media_player, 'app_name') in chromecast_tv_apps) or (chromecast_tv_apps == []) }}
+
+action:
+  - delay:
+      seconds: >
+        {% set val = helper_delay_value | int %}
+        {% set unit = helper_delay_unit %}
+        {% if unit == 'seconds' %}{{ val }}
+        {% elif unit == 'minutes' %}{{ val * 60 }}
+        {% elif unit == 'hours' %}{{ val * 3600 }}
+        {% else %}{{ val }}{% endif %}
+
+  - choose:
+      - conditions: "{{ helper_action_var == 'on' }}"
+        sequence:
+          - service: input_boolean.turn_on
+            target:
+              entity_id: "{{ helper_target_var }}"
+      - conditions: "{{ helper_action_var == 'off' }}"
+        sequence:
+          - service: input_boolean.turn_off
+            target:
+              entity_id: "{{ helper_target_var }}"
+
+  - delay:
+      seconds: >
+        {% set val = scene_delay_value | int %}
+        {% set unit = scene_delay_unit %}
+        {% if unit == 'seconds' %}{{ val }}
+        {% elif unit == 'minutes' %}{{ val * 60 }}
+        {% elif unit == 'hours' %}{{ val * 3600 }}
+        {% else %}{{ val }}{% endif %}
+
+  - service: scene.turn_on
+    target: !input scene_target
