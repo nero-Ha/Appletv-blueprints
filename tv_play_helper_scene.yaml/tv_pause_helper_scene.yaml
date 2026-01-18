@@ -1,9 +1,0 @@
-blueprint:
-  name: TV Pause – Helper + Scene with delay & Disney
-  description: >
-    📺 💡
-    When TV is paused, helper is triggered with optional delay (on/off),
-    then Scene is triggered with optional delay.
-    Works with Apple TV and Chromecast apps.
-  domain: automation
-  source_url: https://github.com/nero-Ha/Appletv-blueprints/blob/main/blueprints/automation/tv_pause_helper_scene.yaml
