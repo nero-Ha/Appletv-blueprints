@@ -6,32 +6,17 @@ A small collection of clean, reusable blueprints focused on media-based lighting
 
 ---
 
-## 🎬 Movie Mode – Save & Restore (Lights + Covers)
+## 🎬 Quick Import of Blueprints
 
-This blueprint allows you to automatically manage lights and covers when watching movies.
+You can import the following blueprints directly into your Home Assistant instance by clicking the buttons below:
 
-### ✨ Features
-- 📸 Saves the current state of selected **lights**
-- 🪟 Saves and restores **cover positions**
-- 🎥 Closes covers when Movie Mode starts
-- ⏱️ Restores lights and covers after Movie Mode ends with a configurable delay
-- 🎚️ Optional light fade-in transition
-- 🛑 Prevents restore if Movie Mode is re-enabled during the delay
+| Blueprint | Description | Import |
+|-----------|-------------|--------|
+| **Play Detection** | Detects when Apple TV or Chromecast starts playing media and turns ON Movie Mode | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubusercontent.com/nero-Ha/89c419fad7593fd07a82958e88249e3d/raw/movie_mode_save_restore.yaml) |
+| **Stop / Pause Detection** | Detects when media is paused or stopped and turns OFF Movie Mode | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubusercontent.com/nero-Ha/7d25335bf65c94c4c428ace105856a81/raw) |
+| **Lights & Covers Snapshot / Restore** | Saves the current state of lights and covers, closes covers on Movie Mode start, and restores them after Movie Mode ends | [![Import](https://my.home-assistant.io/badges/blueprint_import.svg)](https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubusercontent.com/nero-Ha/e6379e81975b4606fa520f24b82e46b2/raw/movie_mode_save_restore.yaml) |
 
-Perfect for cinema or TV setups where pausing playback briefly should not immediately change lighting.
-
----
-
-## 📥 Quick Import to Home Assistant
-
-Click the button below to import the blueprint directly into your Home Assistant instance:
-
-[![Import Blueprint](https://my.home-assistant.io/badges/blueprint_import.svg)](
-https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubusercontent.com/nero-Ha/e6379e81975b4606fa520f24b82e46b2/raw/movie_mode_save_restore.yaml
-)
-
-
-> 📌 Make sure you are logged into your Home Assistant instance in the same browser.
+> 📌 Make sure you are logged into your Home Assistant instance in the same browser before clicking the import buttons.
 
 ---
 
@@ -39,47 +24,49 @@ https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubu
 
 If you prefer manual installation:
 
-1. Download `movie_mode_save_restore.yaml` from the Gist link above  
-2. In Home Assistant go to:  
-   **Settings → Automations & Scenes → Blueprints**
-3. Click **Import Blueprint**
-4. Upload the downloaded file
+1. Download the YAML files from the Gist links above  
+2. In Home Assistant, go to:  
+   **Settings → Automations & Scenes → Blueprints**  
+3. Click **Import Blueprint**  
+4. Upload the downloaded files
 
 ---
 
 ## ⚙️ Blueprint Configuration
 
-The blueprint provides the following inputs:
+### 1️⃣ Play Detection
+- Monitors Apple TV or Chromecast media state  
+- Turns ON Movie Mode when playback starts
 
-| Input | Description |
-|------|-------------|
-| **Movie Mode helper** | `input_boolean` controlling Movie Mode (ON = playing, OFF = paused/stopped) |
-| **Lights** | Lights to snapshot and restore |
-| **Covers** | Covers (blinds / curtains) to close and restore |
-| **Restore delay** | Time to wait before restoring lights and covers |
-| **Light transition** | Fade-in duration when restoring lights |
+### 2️⃣ Stop / Pause Detection
+- Monitors media stop or pause events  
+- Turns OFF Movie Mode
+
+### 3️⃣ Lights & Covers Snapshot / Restore
+- Saves the current state of selected lights and covers  
+- Closes covers when Movie Mode starts  
+- Restores lights and covers after Movie Mode ends with a configurable delay  
+- Optional light fade-in transition  
+- Prevents restore if Movie Mode is re-enabled during the delay
 
 ---
 
 ## 🧠 Recommended Setup
 
-- Create one `input_boolean` named for example:  
-  `input_boolean.movie_mode`
-- Use this blueprint together with:
-  - Apple TV `media_player.state`
-  - Chromecast `media_player.state`
-- Trigger Movie Mode ON when media starts playing  
-- Trigger Movie Mode OFF when media is paused or stopped
+- Create an `input_boolean.movie_mode` to control Movie Mode  
+- Use **Play Detection** to turn ON the input_boolean when media starts playing  
+- Use **Stop / Pause Detection** to turn OFF the input_boolean when media pauses or stops  
+- Use **Lights & Covers Snapshot / Restore** to automatically save and restore lighting and cover positions
 
 ---
 
 ## 💡 Contribution & Development
 
-Ideas, improvements, or new blueprints are welcome!
+Ideas, improvements, or new blueprints are welcome!  
 
 You can:
-- Open an **Issue** for feature requests or bugs
-- Submit a **Pull Request**
+- Open an **Issue** for feature requests or bugs  
+- Submit a **Pull Request**  
 - Leave a ⭐ if you find this useful 🙂
 
 ---
