@@ -1,0 +1,194 @@
+blueprint:
+  name: 🎬 Movie Mode – Save & Restore (Lights + Covers)
+  description: >
+    This blueprint is designed for a "Movie Mode" helper (input_boolean).
+
+    ▶ When Movie Mode turns ON (PLAY):
+      • Saves the current state of selected lights (snapshot)
+      • Saves the current cover positions
+      • Closes the covers
+
+    ⏸ When Movie Mode turns OFF (PAUSE):
+      • Waits for a configurable delay
+      • If Movie Mode is NOT turned ON again during this time:
+          – Restores the previous light states
+          – Restores the previous cover positions
+
+    Ideal for cinema setups where a short pause should NOT immediately
+    change lights or covers.
+  domain: automation
+  author: Nero
+
+  input:
+    movie_helper:
+      name: 🎥 Movie Mode helper (PLAY / PAUSE)
+      description: >
+        Input boolean used to control Movie Mode.
+        ON = movie playing
+        OFF = movie paused or stopped
+      selector:
+        entity:
+          domain: input_boolean
+
+    lights:
+      name: 💡 Lights to snapshot & restore
+      description: >
+        Lights that will be saved when Movie Mode starts
+        and restored when it ends.
+      selector:
+        target:
+          entity:
+            domain: light
+
+    covers:
+      name: 🪟 Covers to control
+      description: >
+        Covers (blind / curtain) that will be closed
+        when Movie Mode starts and restored afterward.
+      selector:
+        target:
+          entity:
+            domain: cover
+
+    cover_position_helper:
+      name: 📏 Cover position memory (helper)
+      description: >
+        Input_number used to temporarily store
+        the current cover positions. For multiple covers,
+        this will store the last one.
+      selector:
+        entity:
+          domain: input_number
+
+    restore_delay_value:
+      name: ⏱️ Restore delay – value
+      description: >
+        How long Home Assistant should wait AFTER Movie Mode is turned OFF
+        before restoring lights and covers.
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 60
+          step: 1
+
+    restore_delay_unit:
+      name: ⏱️ Restore delay – unit
+      description: >
+        Time unit for the restore delay.
+      default: minutes
+      selector:
+        select:
+          options:
+            - seconds
+            - minutes
+            - hours
+
+    light_transition:
+      name: 🎚️ Light restore transition
+      description: >
+        Fade-in duration (in seconds) when lights are restored.
+        Set to 0 for instant restore.
+      default: 3
+      selector:
+        number:
+          min: 0
+          max: 30
+          step: 1
+          unit_of_measurement: seconds
+          mode: slider
+
+mode: restart
+
+trigger:
+  - platform: state
+    entity_id: !input movie_helper
+
+variables:
+  restore_delay_value: !input restore_delay_value
+  restore_delay_unit: !input restore_delay_unit
+  covers_entities: !input covers
+  cover_position_helper_entity: !input cover_position_helper
+
+action:
+  - choose:
+
+      # ==========================
+      # ▶ MOVIE MODE ON (PLAY)
+      # ==========================
+      - conditions:
+          - condition: state
+            entity_id: !input movie_helper
+            state: "on"
+        sequence:
+
+          # Save positions for all covers
+          - service: input_number.set_value
+            target:
+              entity_id: !input cover_position_helper
+            data:
+              value: >
+                {% set positions = [] %}
+                {% for cover in covers_entities %}
+                  {% set pos = state_attr(cover, 'current_position') | int(0) %}
+                  {% set positions = positions + [pos] %}
+                {% endfor %}
+                {{ positions | join(',') }}
+
+          - service: scene.create
+            data:
+              scene_id: "{{ this.entity_id | replace('.', '_') }}_movie_previous"
+              snapshot_entities: !input lights
+
+          # Close all covers
+          - repeat:
+              for_each: "{{ covers_entities }}"
+              sequence:
+                - service: cover.set_cover_position
+                  target:
+                    entity_id: "{{ repeat.item }}"
+                  data:
+                    position: 0
+
+      # ==========================
+      # ⏸ MOVIE MODE OFF (PAUSE)
+      # ==========================
+      - conditions:
+          - condition: state
+            entity_id: !input movie_helper
+            state: "off"
+        sequence:
+
+          - delay:
+              seconds: >
+                {% set val = restore_delay_value | int %}
+                {% if restore_delay_unit == 'seconds' %}
+                  {{ val }}
+                {% elif restore_delay_unit == 'minutes' %}
+                  {{ val * 60 }}
+                {% elif restore_delay_unit == 'hours' %}
+                  {{ val * 3600 }}
+                {% endif %}
+
+          - condition: state
+            entity_id: !input movie_helper
+            state: "off"
+
+          - service: scene.turn_on
+            target:
+              entity_id: >
+                scene.{{ this.entity_id | replace('.', '_') }}_movie_previous
+            data:
+              transition: !input light_transition
+
+          # Restore all covers
+          - variables:
+              saved_positions: "{{ states(cover_position_helper_entity) | string | split(',') }}"
+          - repeat:
+              for_each: "{{ covers_entities | list | zip(saved_positions) | list }}"
+              sequence:
+                - service: cover.set_cover_position
+                  target:
+                    entity_id: "{{ repeat.item[0] }}"
+                  data:
+                    position: "{{ repeat.item[1] | int }}"
