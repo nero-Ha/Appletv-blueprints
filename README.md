@@ -30,6 +30,7 @@ Click the button below to import the blueprint directly into your Home Assistant
 https://my.home-assistant.io/redirect/blueprint_import/?url=https://gist.githubusercontent.com/nero-Ha/e6379e81975b4606fa520f24b82e46b2/raw/movie_mode_save_restore.yaml
 )
 
+
 > 📌 Make sure you are logged into your Home Assistant instance in the same browser.
 
 ---
